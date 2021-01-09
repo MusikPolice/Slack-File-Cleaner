@@ -55,7 +55,7 @@ When you press enter, the browser will pop up a Slack login form.
  We finally have everything that we need to get a [User Token](https://api.slack.com/authentication/token-types#user) that the script can authenticate with!
 
  Paste the following URL into your web browser, replacing `xxx-my-client-id-xxx` with the Client ID from above, `xxx-my-client-secret-xxx` with the Client Secret from above, `xxx-code-xxx` with the Code from the previous step, and `xxx-my-redirect-url-xxx` with the *url encoded* Redirect Url from above:
- https://slack.com/api/oauth.access?client_id=xxx-my-client-id-xxx&client_secret=xxx-my-client-secret-xxx&code=xxx-code-xxx&redirect_uri=http%3A%2F%2Fjonathanfritz.ca
+ https://slack.com/api/oauth.access?client_id=xxx-my-client-id-xxx&client_secret=xxx-my-client-secret-xxx&code=xxx-code-xxx&redirect_uri=xxx-my-redirect-url-xxx
 
 If all goes well, your browser should show you a chunk of JSON. Copy the `access_token` attribute. It should be a string that starts with the letters `xoxp-`. This is your [User Token](https://api.slack.com/authentication/token-types#user).
 
