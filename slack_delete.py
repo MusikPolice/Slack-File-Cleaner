@@ -1,5 +1,7 @@
 from urllib.parse import urlencode
 from urllib.request import urlopen
+from urllib.error import URLError
+from http.client import RemoteDisconnected
 import argparse
 import time
 import json
@@ -107,9 +109,15 @@ def list_files(token, channelId, count, days):
     """
     params = {'token': token, 'channel':channelId, 'ts_to': calculate_days(days), 'count': count}
     uri = 'https://slack.com/api/files.list'
-    response = reader(urlopen(uri + '?' + urlencode(params)))
-    return json.load(response)['files']
-
+    while True:
+        try:
+            response = reader(urlopen(uri + '?' + urlencode(params)))
+            return json.load(response)['files']
+        except (RemoteDisconnected, URLError) as e:
+            # retry until it works
+            print ("\t", "failed to list files for channel id ", channelId)
+            time.sleep(1)
+            continue
 
 def get_channel_name(token, channel_id):
     """
@@ -153,8 +161,12 @@ def delete_files(token, file_ids, days):
               'file': file_id,
             }
             uri = 'https://slack.com/api/files.delete'
-            response = reader(urlopen(uri + '?' + urlencode(params)))
-            print("\t", count, "of", num_files, "-", file_id, json.load(response)['ok'])
+            try:
+                response = reader(urlopen(uri + '?' + urlencode(params)))
+                print("\t", count, "of", num_files, "-", file_id, json.load(response)['ok'])
+            except URLError:
+                print("\t failed to delete ", file_id)
+                continue
     else:
         print("\n[*] Files will not be deleted.")
 
