@@ -19,17 +19,25 @@ def main():
     options = parser.parse_args()
 
     # Initialize Deletion
-
     try:
-        print("\n[*] Fetching file list..")
-        files = list_files(token=options.token, count=options.count, days=options.days)
-        unpinned_files = ignore_pinned(token=options.token, files=files)
+        print("\n[*] Fetching channel list..")
+        channels = list_channels(token=options.token)
+        for channelId in channels:
+            print("\n[*] Deleting files older than " + str(options.days) + " days from " + channels[channelId] + "..")
+            if not join_channel(token=options.token, channelId=channelId):
+                print("\n Failed to join channel")
+                continue
 
-        if(len(unpinned_files) > 0):
-            file_ids = [f['id'] for f in unpinned_files]
-            delete_files(token=options.token, file_ids=file_ids, days=options.days)
-        else:
-            print("\n[*] There are no unpinned files older than", options.days, "days to be deleted!")
+            files = list_files(token=options.token, channelId=channelId, count=options.count, days=options.days)
+            unpinned_files = ignore_pinned(token=options.token, files=files)
+
+            if(len(unpinned_files) > 0):
+                file_ids = [f['id'] for f in unpinned_files]
+                delete_files(token=options.token, file_ids=file_ids, days=options.days)
+            else:
+                print("\n[*] There are no unpinned files older than", options.days, "days to be deleted!")
+
+            leave_channel(token=options.token, channelId=channelId)
 
 
         print("\n[*] Done\n")
@@ -37,6 +45,7 @@ def main():
     except KeyboardInterrupt:
         print("\b\b[-] Aborted")
         exit(1)
+
 
 def calculate_days(days):
     """
@@ -46,18 +55,61 @@ def calculate_days(days):
     """
     return int(time.time()) - days * 24 * 60 * 60
 
-def list_files(token, count, days):
+
+def list_channels(token):
+    """
+    Lists all channels in the workspace
+    :return a map where the key is the channel id and the value is the channel name
+    """
+    params = {'token': token}
+    uri = 'https://slack.com/api/conversations.list'
+    response = reader(urlopen(uri + '?' + urlencode(params)))
+
+    channels = {}
+    for channel in json.load(response)['channels']:
+        id = channel['id']
+        name = channel['name']
+        channels[id] = name
+
+    return channels
+
+
+def join_channel(token, channelId):
+    """
+    Joins the specified channel
+    :return true if the channel was joined successfully
+    """
+    params = {'token': token, 'channel':channelId}
+    uri = 'https://slack.com/api/conversations.join'
+    response = reader(urlopen(uri + '?' + urlencode(params)))
+    return json.load(response)['ok'] == True
+
+
+def leave_channel(token, channelId):
+    """
+    Leaves the specified channel
+    :return true if the channel was left successfully
+    """
+    params = {'token': token, 'channel':channelId}
+    uri = 'https://slack.com/api/conversations.join'
+    response = reader(urlopen(uri + '?' + urlencode(params)))
+    return json.load(response)['ok'] == True
+
+
+def list_files(token, channelId, count, days):
     """
     Get a list of all file
+    :param channelId: the unique id of the channel to list files for
     :param token: string
     :param count: int
     :param days: int
     :return: list
     """
-    params = {'token': token, 'ts_to': calculate_days(days), 'count': count}
+    params = {'token': token, 'channel':channelId, 'ts_to': calculate_days(days), 'count': count}
     uri = 'https://slack.com/api/files.list'
     response = reader(urlopen(uri + '?' + urlencode(params)))
     return json.load(response)['files']
+
 
 def get_channel_name(token, channel_id):
     """
@@ -79,6 +131,7 @@ def get_channel_name(token, channel_id):
         return '#' + channel['name']
     else:
         return 'a private direct message.'
+
 
 def delete_files(token, file_ids, days):
     """
@@ -105,6 +158,7 @@ def delete_files(token, file_ids, days):
     else:
         print("\n[*] Files will not be deleted.")
 
+
 def ignore_pinned(token, files):
     """
     Get a list of all files that are not pinned
@@ -126,6 +180,7 @@ def ignore_pinned(token, files):
             unpinned_files.append(f)
     print("\t", count, "unpinned files.")
     return unpinned_files
+
 
 if __name__ == '__main__':
     main()
