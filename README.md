@@ -8,6 +8,8 @@ To get around this limitation, you'll need to authenticate using OAuth so that t
 
 This means that the script will have the same permissions as your Slack user, and will only be able to delete files that your user account can delete. In other words, it is best to run the script as the workspace administrator, otherwise it will only be able to delete files that were uploaded by your user account.
 
+If you prefer to follow the official docs for this process, see https://api.slack.com/legacy/oauth. Otherwise, read on.
+
 ### Creating a Slack App
 Before you can do anything, you'll need to create a Slack App.
 
@@ -33,10 +35,12 @@ Make sure that you note the Redirect URL that you created. We'll need it in the 
 
 ### Getting an OAuth Token
 #### Getting a Code
-With your Client ID, Client Secret, and Redirect URL in hand, you can (finally!) generate a User Token that will allow the script to act on your behalf.
+With your Client ID, Client Secret, and Redirect URL in hand, you can (finally!) generate a [User Token](https://api.slack.com/authentication/token-types#user) that will allow the script to act on your behalf.
 
 Paste the following URL into your web browser, replacing `xxx-my-client-id-xxx` with the Client ID from above, and `xxx-my-redirect-url-xxx` with the *url encoded* Redirect Url from above:
 https://slack.com/oauth/authorize?client_id=xxx-my-client-id-xxx&scope=files%3Aread%20files%3Awrite%3Auser%20channels%3Aread%20channels%3Awrite&redirect_uri=xxx-my-redirect-url-xxx
+
+> Note: this URL grants the script the `files:read`, `files:write:user`, `channels:read`, and `channels:write` scopes. For an explanation of what each of these scopes does, see https://api.slack.com/legacy/oauth-scopes
 
 When you press enter, the browser will pop up a Slack login form. 
  * If you are not logged in to the target workspace, it will prompt you to enter your username and password
@@ -48,12 +52,12 @@ When you press enter, the browser will pop up a Slack login form.
  Copy the text between `code=` and `&state`. This is your Code.
 
  #### Exchanging the Code for a User Token
- We finally have everything that we need to get a User Token that the script can authenticate with!
+ We finally have everything that we need to get a [User Token](https://api.slack.com/authentication/token-types#user) that the script can authenticate with!
 
  Paste the following URL into your web browser, replacing `xxx-my-client-id-xxx` with the Client ID from above, `xxx-my-client-secret-xxx` with the Client Secret from above, `xxx-code-xxx` with the Code from the previous step, and `xxx-my-redirect-url-xxx` with the *url encoded* Redirect Url from above:
  https://slack.com/api/oauth.access?client_id=xxx-my-client-id-xxx&client_secret=xxx-my-client-secret-xxx&code=xxx-code-xxx&redirect_uri=http%3A%2F%2Fjonathanfritz.ca
 
-If all goes well, your browser should show you a chunk of JSON. Copy the `access_token` attribute. It should be a string that starts with the letters `xoxp-`. This is your User Token.
+If all goes well, your browser should show you a chunk of JSON. Copy the `access_token` attribute. It should be a string that starts with the letters `xoxp-`. This is your [User Token](https://api.slack.com/authentication/token-types#user).
 
 ## Using the Script
 ```
